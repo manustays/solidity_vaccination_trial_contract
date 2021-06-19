@@ -2,8 +2,13 @@
 pragma solidity 0.8.5;
 
 
-contract Clinic {
+contract Clinics {
     
+    struct Clinic {
+        uint64 id;
+        string location;
+        bool isApproved;
+    }
     
 }
 
@@ -18,8 +23,8 @@ contract Volunteers {
         string other_vaccine_name;
         uint256 other_vaccination_date;
         
-        bool doesExists;
-        bool approved;
+        bool doesExist;
+        bool isApproved;
     }
 
     mapping (address => Volunteer) private volunteers;
@@ -41,10 +46,10 @@ contract Volunteers {
     function addVolunteer(uint256 dob, bytes1 gender, bytes memory medical_precondition, bool other_vaccine_taken, string memory other_vaccine_name, uint256 other_vaccination_date) public {
         address volunteer = msg.sender;
         
-        require(volunteers[volunteer].doesExists != true, "Volunteer already exists");
+        require(volunteers[volunteer].doesExist != true, "Volunteer already exists");
         
-        volunteers[volunteer].doesExists = true;
-        volunteers[volunteer].approved = false;
+        volunteers[volunteer].doesExist = true;
+        volunteers[volunteer].isApproved = false;
         
         volunteers[volunteer].dob = dob;
         volunteers[volunteer].gender = gender;
@@ -58,7 +63,12 @@ contract Volunteers {
     
     
     function removeVolunteer() public {
-        volunteers[msg.sender].doesExists = false;
+        volunteers[msg.sender].doesExist = false;
+    }
+    
+    
+    function isValidVolunteer(address volunteer) public view returns (bool) {
+        return volunteers[volunteer].doesExist && volunteers[msg.sender].isApproved;
     }
 
 }
