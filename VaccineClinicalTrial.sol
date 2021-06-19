@@ -117,6 +117,11 @@ contract ClinicalTrial is Ownable, Volunteers {
     uint public NumberOfDose;
     string private _feedbackPerDose;
     
+    modifier onlyAuditor {
+        require(msg.sender == _clinicAuditor, "Only the Auditor is allowed to do perform action!");
+        _;
+    }
+    
     enum _clinicState { NotVerified, Verified, NotFunctional }
     enum _volunteerState { NotVerified, Verified, InTrial, NotInTrial, CompletedTrial }
     
@@ -129,8 +134,11 @@ contract ClinicalTrial is Ownable, Volunteers {
     }
     
     mapping(address => Clinics) clinics;
+    mapping(address => uint) clinicRemovalRequest;
     
-    event DoseGiven(address volunteer, uint doseNumber, uint remainingDaysForNextDose); // TODO: are we going to pass address of the volunteer ?
+    event DoseGiven(address volunteer, uint doseNumber, uint remainingDaysForNextDose);
+    event Clinic(address clinic, string eventName);
+    event Global(string message);
     
     
     constructor (address clinicAuditor, uint numberOfDoses) {
@@ -140,7 +148,7 @@ contract ClinicalTrial is Ownable, Volunteers {
     }
     
     
-    function enrolClinic (string memory clinicName, string memory clinicLocation, string memory clinicPhoneNumber) public {
+    function enrollClinic (string memory clinicName, string memory clinicLocation, string memory clinicPhoneNumber) public returns (bool) {
         Clinics({
             id: msg.sender,
             name: clinicName,
@@ -148,7 +156,36 @@ contract ClinicalTrial is Ownable, Volunteers {
             phoneNumber: clinicPhoneNumber,
             clinicState: _clinicState.NotVerified
         });
+        return true;
     }
+    
+    function authoriseClinic (address clinicAddress) public onlyAuditor returns (bool) {
+        require(clinics[clinicAddress].clinicState != _clinicState.Verified, "Clinic already verfified.");
+        clinics[clinicAddress].clinicState = _clinicState.Verified;
+        emit Clinic(clinicAddress, "AuthoriseClinic");
+        return true;
+    }
+    
+    function deauthoriseClinic (address clinicAddress) public onlyAuditor returns (bool) {
+        require(clinicRemovalRequest[clinicAddress] == 1, "No Removal Request Present.");
+        clinics[clinicAddress].clinicState = _clinicState.NotFunctional;
+        emit Clinic(clinicAddress, "De-AuthoriseClinic");
+        return true;
+    }
+    
+    function clinicRemovalReq () public returns (bool) {
+        require(clinics[msg.sender].clinicState == _clinicState.Verified, "Clinic not verfified.");
+        clinicRemovalRequest[msg.sender] = 1;
+        emit Clinic(msg.sender, "RemoveClinicRequest");
+        return true;
+    }
+    
+    function EndTrial() public onlyOwner {
+        require(!_trialEnded);
+        _trialEnded = true;
+        emit Global("Trials ended, thanks for your paticipation!");
+    }
+
     
     
     /* ====================== By Abhishek ========================== */
@@ -245,4 +282,3 @@ contract ClinicalTrial is Ownable, Volunteers {
     
     
 }
-
