@@ -101,7 +101,6 @@ contract Volunteers {
  */
 contract ClinicalTrial is Ownable, Volunteers {
 
-    address private _owner;
     address private _clinicAuditor;
     bool _trialEnded;
 
@@ -155,17 +154,17 @@ contract ClinicalTrial is Ownable, Volunteers {
     event DoseGiven(address volunteer, uint doseNumber, uint remainingDaysForNextDose);
     event Clinic(address clinic, string eventName);
     event Global(string message);
+    
     enum _clinicState { NotVerified, Verified, NotFunctional }
     enum _volunteerState { NotVerified, Verified, InTrial, NotInTrial, CompletedTrial }
 
     constructor (address clinicAuditor, uint numberOfDoses) {
-        _owner = msg.sender;
         _clinicAuditor = clinicAuditor;
         NumberOfDose = numberOfDoses;
     }
 
     function enrollClinic (string memory clinicName, string memory clinicLocation, string memory clinicPhoneNumber) public returns (bool) {
-        require(msg.sender != _owner && msg.sender != _clinicAuditor, "You can not enroll for clinic.");
+        require(msg.sender != owner && msg.sender != _clinicAuditor, "You can not enroll for clinic.");
         require(bytes(clinicName).length != 0, "clinic name should not be empty.");
         require(bytes(clinicLocation).length != 0, "clinic location should not be empty.");
         require(bytes(clinicPhoneNumber).length != 0, "clinic phone number should not be empty.");
@@ -225,12 +224,13 @@ contract ClinicalTrial is Ownable, Volunteers {
         }
 
         doses[dose_no][volunteer] = Dose({
-        dose_no: dose_no,
-        vaccinationDate: block.timestamp,
-        done: true
+            dose_no: dose_no,
+            vaccinationDate: block.timestamp,
+            done: true
         });
 
         if (dose_no == NumberOfDose) {
+            total_partially_vaccinated--;
             total_fully_vaccinated++;
         } else if (dose_no < NumberOfDose) {
             total_partially_vaccinated++;
@@ -242,8 +242,8 @@ contract ClinicalTrial is Ownable, Volunteers {
         require(doses[NumberOfDose][volunteer].done, "Result can only be set after finel dose is administered!");
 
         doseResults[NumberOfDose][volunteer] = DoseResult({
-        published: true,
-        success: result
+            published: true,
+            success: result
         });
 
         if (result) {
