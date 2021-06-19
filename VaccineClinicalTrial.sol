@@ -228,6 +228,8 @@ contract ClinicalTrial is Ownable, Volunteers {
         require (doesVolunteerExist(volunteer), "Volunteer doesn't exist");
         
         _approveVolunteer(volunteer);
+        
+        total_valid_volunteers++;
     }
     
     
