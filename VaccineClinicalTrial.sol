@@ -2,7 +2,30 @@
 pragma solidity 0.8.5;
 
 
-contract Clinics {
+/**
+ * @title Utility super-class to provide basic ownership features
+ */
+contract Ownable {
+    
+    /// Current contract owner
+    address public owner;
+    
+    /**
+     * @dev Constructor to set contract creator as the initial owner.
+     */
+    constructor() {
+        owner = msg.sender;
+    }
+    
+    /// Allowed only by the owner
+    modifier onlyOwner {
+        require(msg.sender == owner, "Only the Token owner is allowed to do this!");
+        _;
+    }
+}
+
+
+contract Clinics is Ownable {
     
     struct Clinic {
         uint64 id;
@@ -13,7 +36,7 @@ contract Clinics {
 }
 
 
-contract Volunteers {
+contract Volunteers is Ownable {
     
     struct Volunteer {
         uint256 dob;
@@ -28,6 +51,14 @@ contract Volunteers {
     }
 
     mapping (address => Volunteer) private volunteers;
+    mapping (address => bool) private authorizedClinics;
+    
+    
+    /// Allowed only by the owner
+    modifier onlyValidClinic {
+        require(authorizedClinics[msg.sender] == true, "Only authorized Clinics allowed to do this!");
+        _;
+    }
     
     
     /**
@@ -64,6 +95,11 @@ contract Volunteers {
     
     function removeVolunteer() public {
         volunteers[msg.sender].doesExist = false;
+    }
+    
+    
+    function approveVolunteer(address volunteer) public onlyValidClinic {
+        volunteers[volunteer].isApproved = true;
     }
     
     
