@@ -122,13 +122,19 @@ contract ClinicalTrial is Ownable, Volunteers {
         require(clinics[msg.sender].clinicState == _clinicState.Verified, "Only an authorized clinic can do this!");
         _;
     }
+    
+    modifier clinicExists(address clinic) {
+        require(clinics[msg.sender].doesExist, "Clinic not enrolled");
+        _;
+    }
 
     struct Clinics {
-        address id;
         string name;
         string location;
         string phoneNumber;
         _clinicState clinicState;
+        
+        bool doesExist;
     }
 
     struct Dose {
@@ -168,25 +174,25 @@ contract ClinicalTrial is Ownable, Volunteers {
         require(bytes(clinicName).length != 0, "clinic name should not be empty.");
         require(bytes(clinicLocation).length != 0, "clinic location should not be empty.");
         require(bytes(clinicPhoneNumber).length != 0, "clinic phone number should not be empty.");
-        Clinics({
-        id: msg.sender,
-        name: clinicName,
-        location: clinicLocation,
-        phoneNumber: clinicPhoneNumber,
-        clinicState: _clinicState.NotVerified
-        });
+        clinics[msg.sender] = Clinics({
+                name: clinicName,
+                location: clinicLocation,
+                phoneNumber: clinicPhoneNumber,
+                clinicState: _clinicState.NotVerified,
+                doesExist: true
+            });
         emit Clinic(msg.sender, "ClinicEnrollmentrequest");
         return true;
     }
 
-    function authoriseClinic (address clinicAddress) public onlyAuditor returns (bool) {
+    function authoriseClinic (address clinicAddress) public onlyAuditor clinicExists(clinicAddress) returns (bool) {
         require(clinics[clinicAddress].clinicState != _clinicState.Verified, "Clinic already verfified.");
         clinics[clinicAddress].clinicState = _clinicState.Verified;
         emit Clinic(clinicAddress, "AuthoriseClinic");
         return true;
     }
 
-    function deauthoriseClinic (address clinicAddress) public onlyAuditor returns (bool) {
+    function deauthoriseClinic (address clinicAddress) public onlyAuditor clinicExists(clinicAddress) returns (bool) {
         require(clinicRemovalRequest[clinicAddress] == 1, "No Removal Request Present.");
         clinics[clinicAddress].clinicState = _clinicState.NotFunctional;
         emit Clinic(clinicAddress, "De-AuthoriseClinic");
