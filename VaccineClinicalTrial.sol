@@ -25,7 +25,7 @@ contract Ownable {
 }
 
 
-contract Clinics is Ownable {
+contract Clinics {
     
     struct Clinic {
         uint64 id;
@@ -51,14 +51,6 @@ contract Volunteers is Ownable {
     }
 
     mapping (address => Volunteer) private volunteers;
-    mapping (address => bool) private authorizedClinics;
-    
-    
-    /// Allowed only by the owner
-    modifier onlyValidClinic {
-        require(authorizedClinics[msg.sender] == true, "Only authorized Clinics allowed to do this!");
-        _;
-    }
     
     
     /**
@@ -98,7 +90,10 @@ contract Volunteers is Ownable {
     }
     
     
-    function approveVolunteer(address volunteer) public onlyValidClinic {
+    /**
+     * 
+     */
+    function _approveVolunteer(address volunteer) internal {
         volunteers[volunteer].isApproved = true;
     }
     
